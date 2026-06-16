@@ -51,8 +51,7 @@ def _inject(
 ) -> list[ChatMessageUser]:
     """Insert each ``prompts[i].format(side_task=...)`` at ``indexes[i]`` around the base task.
 
-    Messages carry stable ids (``base_task`` / ``side_task_prompt_{index}``) so a downstream
-    step can identify them.
+    Messages carry stable ids (``base_task`` / ``side_task_prompt_{index}``).
     """
     filled = [p.format(side_task=side_task) for p in prompts]
     messages: list[ChatMessageUser] = [

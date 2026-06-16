@@ -2,10 +2,10 @@
 messages around the task. Importing the package fires the registrations below (Control Tower
 resolves an external ``module:attr`` ref by importing the module).
 
-- eval1 (``--policy``, local runs): ``bracket_messages_policy`` in the ``policies`` registry.
-- eval2 (``--protocol`` + ``--untrusted-policy``, required by hawk): the ``bracketed-agent`` blue
-  protocol (seeds the bracketed conversation into the recorded transcript) + the ``passthrough``
-  untrusted policy (carries an exact model id + generate-config, edits nothing).
+- ``bracket_messages_policy`` (``--policy``) in the ``policies`` registry.
+- ``bracketed-agent`` blue protocol (``--protocol``) that seeds the bracketed conversation, plus the
+  ``passthrough`` untrusted policy (``--untrusted-policy``) that carries an exact model id +
+  generate-config and edits nothing.
 
 Prompts, model id, and generate-config are supplied as args at launch time, not bundled here.
 """

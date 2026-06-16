@@ -1,23 +1,16 @@
-"""Eval2 building blocks so the bracketed-message elicitation works on hawk (which is
-eval2-only: ``ct run eval --hawk`` takes ``--untrusted-policy`` + ``--protocol``, not ``--policy``).
+"""Eval2 building blocks (``ct run eval`` takes ``--untrusted-policy`` + ``--protocol``).
 
 Two registrations:
 
-- blue protocol ``bracketed-agent``: a fork of the stock ``untrusted-agent`` loop that **seeds**
-  ``state.messages`` with caller-provided messages bracketing the base task. Because the protocol
-  owns ``state.messages`` (the recorded transcript), the inserted messages persist in the ``.eval``
-  — an untrusted-policy cannot do this (its edits to the model input are ephemeral).
+- blue protocol ``bracketed-agent``: a fork of the stock ``untrusted-agent`` loop that seeds
+  ``state.messages`` with caller-provided messages around the base task, then runs the usual
+  generate/execute loop. The seeded messages are part of the recorded conversation.
 - untrusted policy ``passthrough``: a minimal policy that carries an exact model id + generate-config
-  and applies no message edits, so what the model sees and what is recorded are exactly the
-  protocol-seeded messages.
+  and applies no message edits.
 
 Run shape:
     --protocol bracketed-agent -bp side_prompts=<json> -bp side_prompt_indexes=0,2
     --untrusted-policy passthrough -up model_name=<id> -up generate_config=<json>
-
-The seeded shape ``[system, side_task_prompt_0, base_task, side_task_prompt_2, ...]`` matches the
-local (eval1) transcript shape, so the downstream remap/monitor (which skip a leading system message
-then strip indexes 0,2) work unchanged.
 """
 
 import json
@@ -71,8 +64,8 @@ _AGENT_SYSTEM_PROMPT = (
 def _seed_messages(
     state: TaskState, side_prompts: str, side_prompt_indexes: str
 ) -> list[ChatMessage]:
-    """Build the opening conversation: a benign system prompt, then the base task (bracketed by
-    the caller-provided messages at the given indexes when a side task is present)."""
+    """Build the opening conversation: a benign system prompt, then the base task (with the
+    caller-provided messages inserted at the given indexes when a side task is present)."""
     metadata = state.metadata_as(SampleMetadata)
     description = metadata.environment.description if metadata.environment else ""
     system = ChatMessageSystem(

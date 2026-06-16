@@ -30,7 +30,7 @@ Policy args (all optional; the prompts are required only when a side task is pre
 |---|---|
 | `side_prompts` | JSON array of message templates, each with a `{side_task}` field. Inserted around the base task. |
 | `side_prompt_indexes` | comma-separated insertion points (default `0,2`). |
-| `model_name` | exact inspect model id (e.g. `anthropic/claude-opus-4-5-20251101`); empty → CT `model` alias. |
+| `model_name` | exact inspect model id (e.g. `provider/model-name`); empty → CT `model` alias. |
 | `generate_config` | JSON object passed to inspect `GenerateConfig`. |
 | `max_steps` | graceful step budget (do **not** use an eval-level message/time limit). |
 
