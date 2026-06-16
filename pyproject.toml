@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bracketed-elicitation-policy"
+version = "0.1.0"
+description = "Control Tower rollout policy that inserts caller-provided messages around the task"
+requires-python = ">=3.13"
+# NO hard deps on control-tower / inspect-ai: this package is always installed ALONGSIDE
+# control-tower on the hawk runner (which brings inspect-ai + pyyaml). Pinning them here would
+# fight CT's own resolution. The policy imports control_tower.* and inspect_ai.* at runtime.
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
