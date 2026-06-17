@@ -66,6 +66,7 @@ def _seed_messages(
     side_prompts: str,
     side_prompt_indexes: str,
     side_only: bool = False,
+    side_task_override: str = "",
 ) -> list[ChatMessage]:
     """Build the opening conversation: a benign system prompt, then the base task (with the
     caller-provided messages inserted at the given indexes when a side task is present).
@@ -89,9 +90,15 @@ def _seed_messages(
         raise ValueError(
             "side task present but no side_prompts provided (JSON array of templates)"
         )
-    side_task_text = metadata.side_task.goal
-    if metadata.side_task.scoring_details:
-        side_task_text = f"{side_task_text}\n\n{metadata.side_task.scoring_details}"
+    if side_task_override:
+        # caller-provided side task text (e.g. neutralized framing) replaces the env's
+        # goal+scoring_details. Operational content is the caller's responsibility; the scorer
+        # is unaffected (it checks env state, not this text).
+        side_task_text = side_task_override
+    else:
+        side_task_text = metadata.side_task.goal
+        if metadata.side_task.scoring_details:
+            side_task_text = f"{side_task_text}\n\n{metadata.side_task.scoring_details}"
 
     if side_only:
         return [
@@ -121,6 +128,7 @@ def bracketed_agent_protocol(
     side_prompts: str = Field(default="[]"),
     side_prompt_indexes: str = Field(default="0,2"),
     side_only: bool = Field(default=False),
+    side_task_override: str = Field(default=""),
     max_steps: int = Field(default=200),
     step_warning: bool = Field(default=True),
     nudge_on_empty_reply: bool = Field(default=True),
@@ -134,7 +142,11 @@ def bracketed_agent_protocol(
         submit_tool_name = get_submit_tool_name(state)
         state.tools = tools
         state.messages = _seed_messages(
-            state, side_prompts, side_prompt_indexes, side_only=side_only
+            state,
+            side_prompts,
+            side_prompt_indexes,
+            side_only=side_only,
+            side_task_override=side_task_override,
         )
 
         consecutive_empty = 0
