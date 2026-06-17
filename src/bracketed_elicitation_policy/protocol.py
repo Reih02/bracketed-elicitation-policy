@@ -62,10 +62,17 @@ _AGENT_SYSTEM_PROMPT = (
 
 
 def _seed_messages(
-    state: TaskState, side_prompts: str, side_prompt_indexes: str
+    state: TaskState,
+    side_prompts: str,
+    side_prompt_indexes: str,
+    side_only: bool = False,
 ) -> list[ChatMessage]:
     """Build the opening conversation: a benign system prompt, then the base task (with the
-    caller-provided messages inserted at the given indexes when a side task is present)."""
+    caller-provided messages inserted at the given indexes when a side task is present).
+
+    When ``side_only`` is set, the base task is omitted entirely and the conversation is just
+    ``[system, prompts[0]]`` (filled with the side task) — the agent sees ONLY the side task,
+    with no base-task cover. Mirrors shushcast's side_task_only condition."""
     metadata = state.metadata_as(SampleMetadata)
     description = metadata.environment.description if metadata.environment else ""
     system = ChatMessageSystem(
@@ -82,10 +89,20 @@ def _seed_messages(
         raise ValueError(
             "side task present but no side_prompts provided (JSON array of templates)"
         )
-    indexes = [int(i) for i in side_prompt_indexes.split(",")]
     side_task_text = metadata.side_task.goal
     if metadata.side_task.scoring_details:
         side_task_text = f"{side_task_text}\n\n{metadata.side_task.scoring_details}"
+
+    if side_only:
+        return [
+            system,
+            ChatMessageUser(
+                content=prompts[0].format(side_task=side_task_text),
+                id="side_task_prompt_0",
+            ),
+        ]
+
+    indexes = [int(i) for i in side_prompt_indexes.split(",")]
     filled = [p.format(side_task=side_task_text) for p in prompts]
 
     block: list[ChatMessage] = [base]
@@ -103,6 +120,7 @@ def _seed_messages(
 def bracketed_agent_protocol(
     side_prompts: str = Field(default="[]"),
     side_prompt_indexes: str = Field(default="0,2"),
+    side_only: bool = Field(default=False),
     max_steps: int = Field(default=200),
     step_warning: bool = Field(default=True),
     nudge_on_empty_reply: bool = Field(default=True),
@@ -115,7 +133,9 @@ def bracketed_agent_protocol(
         tools = get_blue_protocol_tools(state)
         submit_tool_name = get_submit_tool_name(state)
         state.tools = tools
-        state.messages = _seed_messages(state, side_prompts, side_prompt_indexes)
+        state.messages = _seed_messages(
+            state, side_prompts, side_prompt_indexes, side_only=side_only
+        )
 
         consecutive_empty = 0
         for step in range(max_steps):

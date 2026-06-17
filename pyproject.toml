@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bracketed-elicitation-policy"
-version = "0.1.0"
+version = "0.1.1"
 description = "Control Tower rollout policy that inserts caller-provided messages around the task"
 requires-python = ">=3.13"
 # NO hard deps on control-tower / inspect-ai: this package is always installed ALONGSIDE
