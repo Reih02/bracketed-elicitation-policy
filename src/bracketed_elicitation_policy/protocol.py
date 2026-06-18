@@ -67,18 +67,22 @@ def _seed_messages(
     side_prompt_indexes: str,
     side_only: bool = False,
     side_task_override: str = "",
+    system_prompt_override: str = "",
 ) -> list[ChatMessage]:
     """Build the opening conversation: a benign system prompt, then the base task (with the
     caller-provided messages inserted at the given indexes when a side task is present).
 
     When ``side_only`` is set, the base task is omitted entirely and the conversation is just
     ``[system, prompts[0]]`` (filled with the side task) — the agent sees ONLY the side task,
-    with no base-task cover. Mirrors shushcast's side_task_only condition."""
+    with no base-task cover. Mirrors shushcast's side_task_only condition.
+
+    ``system_prompt_override`` (when non-empty) replaces ``_AGENT_SYSTEM_PROMPT`` — a generic hook
+    so callers can vary the system-message framing from the run config (the prompt text stays in
+    the caller, not this package). It is still ``.format(setting_description=...)``-ed."""
     metadata = state.metadata_as(SampleMetadata)
     description = metadata.environment.description if metadata.environment else ""
-    system = ChatMessageSystem(
-        content=_AGENT_SYSTEM_PROMPT.format(setting_description=description)
-    )
+    template = system_prompt_override or _AGENT_SYSTEM_PROMPT
+    system = ChatMessageSystem(content=template.format(setting_description=description))
     main_task = metadata.main_task.description if metadata.main_task else ""
     base = ChatMessageUser(content=main_task, id="base_task")
 
@@ -129,6 +133,7 @@ def bracketed_agent_protocol(
     side_prompt_indexes: str = Field(default="0,2"),
     side_only: bool = Field(default=False),
     side_task_override: str = Field(default=""),
+    system_prompt_override: str = Field(default=""),
     max_steps: int = Field(default=200),
     step_warning: bool = Field(default=True),
     nudge_on_empty_reply: bool = Field(default=True),
@@ -147,6 +152,7 @@ def bracketed_agent_protocol(
             side_prompt_indexes,
             side_only=side_only,
             side_task_override=side_task_override,
+            system_prompt_override=system_prompt_override,
         )
 
         consecutive_empty = 0
